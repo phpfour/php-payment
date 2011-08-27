@@ -8,11 +8,13 @@ class Factory
     {
         $file = __DIR__ . '/Gateway/' . $provider . '.php';
 
-        if (!include_once($file)) {
-            throw new \Exception('Invalid gateway specified.');
+        if (!file_exists($file)) {
+            throw new \InvalidArgumentException('Invalid gateway specified.');
         }
 
         $class = 'Rbs\\Payment\\Gateway\\' . $provider;
+
+        include_once ($file);
         $instance = new $class();
         
         return $instance;

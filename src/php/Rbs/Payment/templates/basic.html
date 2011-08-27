@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>{pageTitle}</title>
+    <style type="text/css">
+        div.notice {
+            border: 5px solid #ccc;
+            background-color: #efefef;
+            padding: 20px;
+            text-align: center;
+        }
+    </style>
+    <script type="text/javascript">
+        window.onLoad = function() {
+            document.forms['gateway_form'].submit();
+        }
+    </script>
+</head>
+<body>
+    <div class="notice">
+        {primaryMessage}
+        {paymentForm}
+    </div>
+</body>
+</html>

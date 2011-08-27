@@ -7,8 +7,10 @@ abstract class AbstractGateway
     protected $fields;
     protected $gatewayUrl;
     protected $testMode;
-    protected $template;
-
+    protected $placeholders;
+    protected $templateLoader;
+    protected $httpClient;
+    
     public function __construct()
     {
         $this->setDefaults();
@@ -17,56 +19,44 @@ abstract class AbstractGateway
 
     private function setDefaults()
     {
-        $this->testMode = false;
-        $this->template = <<<HTML
-<!doctype html>
-<html lang="en">
-<head>
-    <meta charset="utf-8">
-    <title>Proceeding to Payment</title>
-    <style type="text/css">
-        div.notice {
-            border: 5px solid #ccc;
-            background-color: #efefef;
-            padding: 20px;
-            text-align: center;
-        }
-    </style>
-</head>
-<body>
-    <div class="notice">
-        Please wait, your order is being processed and you will be redirected to the payment website.
-        [FORM]
-    </div>
-</body>
-</html>
-HTML;
+        $this->fields = new \Rbs\Payment\Fields();
 
+        $this->placeholders = array(
+            'paymentForm' => '',
+            'redirectButton' => "Click here",
+            'primaryMessage' => "Please wait, your order is being processed and you will be redirected to the payment website.",
+            'redirectMessage' => "If you are not automatically redirected to payment website within 5 seconds, "
+        );
+
+        $this->setTemplateLoader(new \Rbs\Payment\Template\Loader\Filesystem(__DIR__ . "/../templates/basic.html"));
     }
 
-    public function setTemplate($html)
+    public function setTemplateLoader(\Rbs\Payment\Template\LoaderInterface $loader)
     {
-        if ($this->isValidTemplate($html)) {
-            $this->template = $html;
+        if ($this->isValidTemplate($loader)) {
+            $this->templateLoader = $loader;
         } else {
-            throw new \InvalidArgumentException("Provided template HTML does not contain required [FORM] placeholder.");
+            throw new \InvalidArgumentException("Provided template loader does not return required placeholders.");
         }
     }
 
-    private function isValidTemplate($html)
+    private function isValidTemplate(\Rbs\Payment\Template\LoaderInterface $loader)
     {
-        return (!empty($html) AND strpos($html, "[FORM]") !== false);
+        $html = $loader->load();
+        
+        if (strpos($html, 'paymentForm') === false) {
+            return false;
+        }
+
+        return true;
     }
 
     public function proceed()
     {
         if ($this->validate()) {
-
-            $formHtml = $this->getPaymentForm();
-            $output = str_replace('[FORM]', $formHtml, $this->template);
-            $output = str_replace("<body>", '<body onLoad="document.forms[\'gateway_form\'].submit();">', $output);
-
-            echo $output;
+            $this->placeholders['paymentForm'] = $this->getPaymentForm();
+            $parser = new \Rbs\Payment\Template\Parser($this->templateLoader);
+            echo $parser->parse($this->placeholders);
         }
     }
 
@@ -75,33 +65,28 @@ HTML;
         $formHtml = '';
         $formHtml .= '<form method="POST" name="gateway_form" action="' . $this->gatewayUrl . '">';
 
-        foreach ($this->fields as $name => $value) {
-             $formHtml .= "<input type=\"hidden\" name=\"{$name}\" value=\"{$value}\"/>";
+        foreach ($this->fields->getAll() as $name => $value) {
+            echo $name;
+            $formHtml .= "<input type=\"hidden\" name=\"{$name}\" value=\"{$value}\"/>";
         }
 
-        $formHtml .= '<p>If you are not automatically redirected to payment website within 5 seconds.';
-        $formHtml .= '<input type="submit" value="Click Here"></p>';
+        $formHtml .= '<p>{redirectMessage}';
+        $formHtml .= '<input type="submit" value="{redirectButton}"></p>';
         $formHtml .= '</form>';
 
         return $formHtml;
     }
 
-    protected function addField($key, $value)
+    public function populate($fields = array())
     {
-        if (!array_key_exists($key, $this->fields)) {
-            $this->fields[$key] = $value;
-        } else {
-            throw new \InvalidArgumentException("Key $key already exists.");
+        foreach ($fields as $key => $value) {
+            $this->fields->$key = $value;
         }
     }
 
-    protected function getField($key)
+    public function setHttpClient(\Rbs\Payment\Http\Client $client)
     {
-        if (!array_key_exists($key, $this->fields)) {
-            return $this->fields[$key];
-        } else {
-            throw new \InvalidArgumentException("Key $key doesn't exist.");
-        }
+        $this->httpClient = $client;
     }
 
     abstract protected function init();
@@ -109,10 +94,12 @@ HTML;
     
     abstract public function setCurrency($currency);
     abstract public function setAccountIdentifier($identifier);
-    abstract public function setReturnUrl($url);
+    abstract public function setReturnOnSuccessUrl($url);
+    abstract public function setReturnOnFailureUrl($url);
     abstract public function setNotificationUrl($url);
     abstract public function setCustomField($key, $value);
-    abstract public function setSingleItem($name, $amount);
+    abstract public function setSingleItem($name, $amount, $id = null);
     abstract public function setOrderNumber($orderNumber);
     abstract public function setTestMode($mode);
+    abstract public function verify();
 }
