@@ -28,7 +28,7 @@ class Client
 
     public function setMethod($method)
     {
-        $this->method = $method;
+        $this->method = strtoupper($method);
     }
 
     public function sendRequest()
@@ -40,15 +40,13 @@ class Client
 			$postString .= $key .'=' . urlencode(stripslashes($value)) . '&';
 		}
 
-		$postString .="cmd=_notify-validate";
-
         $fp = fsockopen($parsedUrl['host'], $this->port, $errNum, $errStr, 30);
 
         if (!$fp) {
             throw new \Exception("Cannot open socket.");
         }
 
-        fputs($fp, "POST {$parsedUrl['path']} HTTP/1.1\r\n");
+        fputs($fp, "{$this->method} {$parsedUrl['path']} HTTP/1.1\r\n");
         fputs($fp, "Host: {$parsedUrl['host']}\r\n");
         fputs($fp, "Content-type: application/x-www-form-urlencoded\r\n");
         fputs($fp, "Content-length: " . strlen($postString) . "\r\n");

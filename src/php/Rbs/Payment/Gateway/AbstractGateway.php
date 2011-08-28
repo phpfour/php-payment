@@ -23,9 +23,10 @@ abstract class AbstractGateway
 
         $this->placeholders = array(
             'paymentForm' => '',
+            'pageTitle' => 'Proceeding to payment website...',
             'redirectButton' => "Click here",
-            'primaryMessage' => "Please wait, your order is being processed and you will be redirected to the payment website.",
-            'redirectMessage' => "If you are not automatically redirected to payment website within 5 seconds, "
+            'primaryMessage' => "Please wait, your order is being processed and you will be taken to the payment website.",
+            'redirectMessage' => "If you are not automatically redirected to payment website within 5 seconds, <br /><br />"
         );
 
         $this->setTemplateLoader(new \Rbs\Payment\Template\Loader\Filesystem(__DIR__ . "/../templates/basic.html"));
@@ -66,7 +67,6 @@ abstract class AbstractGateway
         $formHtml .= '<form method="POST" name="gateway_form" action="' . $this->gatewayUrl . '">';
 
         foreach ($this->fields->getAll() as $name => $value) {
-            echo $name;
             $formHtml .= "<input type=\"hidden\" name=\"{$name}\" value=\"{$value}\"/>";
         }
 

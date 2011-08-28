@@ -4,20 +4,27 @@
     <meta charset="utf-8">
     <title>{pageTitle}</title>
     <style type="text/css">
+        h2 {
+            margin: 200px auto 20px;
+            text-align: center;
+        }
         div.notice {
             border: 5px solid #ccc;
             background-color: #efefef;
             padding: 20px;
+            margin: 0 auto;
+            width: 630px;
             text-align: center;
         }
     </style>
     <script type="text/javascript">
-        window.onLoad = function() {
+        function submitForm() {
             document.forms['gateway_form'].submit();
         }
     </script>
 </head>
-<body>
+<body onload="submitForm();">
+    <h2>{pageTitle}</h2>
     <div class="notice">
         {primaryMessage}
         {paymentForm}
