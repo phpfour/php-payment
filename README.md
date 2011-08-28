@@ -11,7 +11,7 @@ A payment library for PHP that supports Paypal, Authorize.net and 2Checkout.
 Usage
 =====
 
-1. Initiating a paypal checkout
+Initiating a paypal checkout
 
     $paypal = \Rbs\Payment\Factory::factory('Paypal');
 
@@ -25,7 +25,7 @@ Usage
 
     $paypal->proceed();
 
-2. Verifying paypal IPN response
+Verifying paypal IPN response
 
     $paypal = \Rbs\Payment\Factory::factory('Paypal');
     $client = \Rbs\Payment\Http\Client();
@@ -35,7 +35,7 @@ Usage
 
     $status = $paypal->verify();
 
-More updates coming.
+More updates coming soon.
 
 Dependencies
 ============
